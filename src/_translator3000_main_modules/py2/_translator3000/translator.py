@@ -9,15 +9,16 @@ from ._reverso import translator as reverso_translator
 from ._bing_translator import translator as bing_translator
 from ._lingvanex import translator as lingvanex_translator
 from ._yandex_translate import translator as yandex_translator, translator_alt as yandex_translator_alt
+from ._openai import translator as openai_translator
 from . import _all_sessions, selenium_session, LOGGER
 
 
 class Translator(object):
     __author__ = 'Vladya'
     LOGGER = LOGGER.getChild('MainTranslator')
-    CLASSES = {'google_gtx': google_gtx_translator.Translator, 'google_client5': google_client5_translator.Translator, 'google_rpc': google_rpc_translator.Translator, 'selenium_deepl': selenium_deepl_translator.Translator, 'deepl_official': deepl_official_translator.Translator, 'yandex_translate': yandex_translator.Translator, 'reverso': reverso_translator.Translator, 'bing': bing_translator.Translator, 'lingvanex': lingvanex_translator.Translator}
+    CLASSES = {'google_gtx': google_gtx_translator.Translator, 'google_client5': google_client5_translator.Translator, 'google_rpc': google_rpc_translator.Translator, 'selenium_deepl': selenium_deepl_translator.Translator, 'deepl_official': deepl_official_translator.Translator, 'yandex_translate': yandex_translator.Translator, 'reverso': reverso_translator.Translator, 'bing': bing_translator.Translator, 'lingvanex': lingvanex_translator.Translator, 'openai_api': openai_translator.Translator, 'openai_chatgpt': openai_translator.ChatGPTTranslator}
     ALT_CLASSES = {'yandex_translate': yandex_translator_alt.Translator}
-    alias_mapping = {'google_client5': ('google',)}
+    alias_mapping = {'google_client5': ('google',), 'openai_chatgpt': ('openai_chatgpt_auto', 'openai_chatgpt_app', 'openai_codex_gpt6', 'openai_codex_sol'), 'openai_api': ('openai_api_gpt6', 'openai_api_sol')}
     IS_PRINTED_DEBUG = False
 
     def __init__(self, setting_dict=None, multi_setting=None, _use_alts=None, _disable=None):

@@ -116,16 +116,16 @@ File stock được giải nén, file `.rpyc` của nó được decompile bằn
 - [x] Sửa tương thích Ren'Py 8 (dạng `exec` chạy cả Python 2/3, số nguyên dài)
 - [x] Build một lệnh trở lại thành `Translator3000.rpa` thả vào game là chạy
 - [x] Đã kiểm chứng nạp và init trên Ren'Py 7.3.5 và Ren'Py 8.5.3
+- [x] Provider dịch OpenAI / ChatGPT (API key, base URL và model tùy chỉnh, dịch theo ngữ cảnh theo lô)
+- [x] Dịch giao diện game (menu, cài đặt, màn hình save/load) qua cùng provider và cơ sở dữ liệu
+- [x] Xuất / nhập cơ sở dữ liệu dịch (sao lưu, chia sẻ giữa các máy)
+- [x] Chuyển chế độ nhanh (huy hiệu trên màn hình và phím tắt để đổi Tắt ↔ Chỉ CSDL giữa game)
+- [x] Tùy chọn tắt kiểm tra cập nhật bắt buộc
 
 Tính năng dự định phát triển (rất hoan nghênh đóng góp):
 
-- [ ] Provider dịch OpenAI / ChatGPT (API key, base URL và model tùy chỉnh, dịch theo ngữ cảnh theo lô)
-- [ ] Dịch giao diện game (menu, cài đặt, màn hình save/load) qua cùng provider và cơ sở dữ liệu
-- [ ] Xuất / nhập cơ sở dữ liệu dịch (sao lưu, chia sẻ giữa các máy)
-- [ ] Chuyển chế độ nhanh (huy hiệu trên màn hình và phím tắt để đổi Tắt ↔ Chỉ CSDL giữa game)
 - [ ] Tự co chữ dịch cho vừa khung và tự chọn phông thông minh hơn (tiếng Việt, CJK, …)
 - [ ] Thuật ngữ riêng theo game / danh sách không dịch và placeholder được bảo vệ
-- [ ] Tùy chọn tắt kiểm tra cập nhật bắt buộc
 - [ ] Thêm ngôn ngữ giao diện (简体中文, 日本語, Español, …)
 - [ ] Ma trận test tự động Ren'Py 7 / Ren'Py 8 và build RPA bằng CI khi gắn tag phát hành
 - [ ] File build sẵn đính kèm GitHub Releases

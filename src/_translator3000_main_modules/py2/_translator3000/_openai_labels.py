@@ -1,0 +1,291 @@
+# -*- coding: utf-8 -*-
+# Integrated into translator3000-source (native _translator3000 module).
+# Ported from translator3000-openai by tools/port_openai_features.py;
+# keep feature behavior in sync between the two repos (see AGENTS.md).
+from __future__ import unicode_literals
+import re
+import sys
+
+ENGLISH = {
+    'API-ключи': 'API keys',
+    'Изменить ключ': 'Change key',
+    'Ввести ключ': 'Enter key',
+    'Удалить ключ': 'Delete key',
+    'Ключ введён': 'Key entered',
+    'Ключ не введён': 'Key not entered',
+    'Готово': 'Done',
+    'Изменить Base URL': 'Change Base URL',
+    'Сохранять ключ для текущего пользователя Windows': 'Save key for the current Windows user',
+    'OpenAI API оплачивается отдельно. Сохранённый ключ защищён Windows.': 'OpenAI API is billed separately. The saved key is protected by Windows.',
+    'Учётная запись ChatGPT': 'ChatGPT account',
+    'Войти через ChatGPT': 'Sign in with ChatGPT',
+    'Проверить вход': 'Check sign-in',
+    'Отменить': 'Cancel',
+    'Без API-ключа. Действуют доступные модели и лимиты вашего тарифа, включая Free.': 'No API key required. Available models and limits of your plan apply, including Free.',
+    'codex.exe: автоматически': 'codex.exe: automatic',
+    'Указать путь к codex.exe': 'Set path to codex.exe',
+    'Сохранить настройки': 'Save settings',
+    'Выбрать подключение для перевода': 'Select translation connection',
+    'OpenAI / ChatGPT — перевод': 'OpenAI / ChatGPT — translation',
+    'API-ключ / вход через ChatGPT': 'API key / ChatGPT sign-in',
+    'Подключение': 'Connection',
+    'ChatGPT: лимиты учётной записи. API: отдельная оплата.': 'ChatGPT: account limits. API: separate billing.',
+    'Модель для ': 'Model for ',
+    'Доступ к выбранной модели зависит от вашего аккаунта.': 'Access to the selected model depends on your account.',
+    'Размышления': 'Reasoning',
+    'Без размышлений': 'No reasoning',
+    'Лёгкие': 'Low',
+    'Средние': 'Medium',
+    'Глубокие': 'High',
+    'Очень глубокие': 'Extra high',
+    'Максимальные': 'Maximum',
+    'Предельные': 'Ultra',
+    'Пакеты GPT': 'GPT batches',
+    'До %d символов': 'Up to %d characters',
+    'Сканирование: порядок сцен, целые строки, контекст соседних реплик.': 'Scanning: scene order, complete lines, and context from nearby dialogue.',
+    'API получает файл JSON целиком. ChatGPT получает тот же пакет целиком.': 'The API receives the complete JSON file. ChatGPT receives the same complete batch.',
+    'Ответ проверяется до последней строки. При обрыве пакет делится автоматически.': 'The response is checked through the last line. Incomplete batches are split automatically.',
+    'В живом переводе передаются доступные реплики. Для всей игры запустите предварительное сканирование.': 'Live translation sends available dialogue. Run a prescan to translate the entire game.',
+    'Проверка подключения': 'Connection test',
+    'Проверить перевод': 'Test translation',
+    'Подогнать размер текста': 'Fit text size',
+    'OpenAI API — перевод по ключу': 'OpenAI API — translation with an API key',
+    'ChatGPT — вход в учётную запись': 'ChatGPT — account sign-in',
+    'Выберите подключение и модель, затем проверьте связь.': 'Select a connection and model, then test the connection.',
+    'Вход через ChatGPT не проверен.': 'ChatGPT sign-in has not been checked.',
+    'Завершите вход в браузере.': 'Complete sign-in in your browser.',
+    'Проверка входа...': 'Checking sign-in...',
+    'Вход через ChatGPT выполнен.': 'Signed in with ChatGPT.',
+    'Не удалось выполнить вход. Проверьте путь к codex.exe.': 'Sign-in failed. Check the path to codex.exe.',
+    'Не удалось прочитать настройки OpenAI. Введите ключ заново.': 'Could not read OpenAI settings. Enter the key again.',
+    'Настройки сохранены.': 'Settings saved.',
+    'Не удалось сохранить настройки OpenAI.': 'Could not save OpenAI settings.',
+    'Сначала выберите один из сервисов OpenAI.': 'Select an OpenAI service first.',
+    'Проверка связи…': 'Testing connection…',
+    'Связь работает: ': 'Connection works: ',
+    'Ошибка подключения. Проверьте настройки и доступ к модели.': 'Connection error. Check the settings and model access.',
+    'Перевод строк %d–%d из %d; %s, %s.': 'Translating lines %d–%d of %d; %s, %s.',
+    'Готово: %d строк, включая последнюю. Теги и переменные проверены.': 'Done: %d lines, including the last one. Tags and variables verified.',
+    'OpenAI изменил теги или переменные. Ответ не сохранён.': 'OpenAI changed tags or variables. The response was not saved.',
+    'OpenAI добавил разметку. Ответ не сохранён.': 'OpenAI added markup. The response was not saved.',
+    'OpenAI изменил порядок тегов. Ответ не сохранён.': 'OpenAI changed the tag order. The response was not saved.',
+    'Сохранение ключа поддерживается только в Windows.': 'Saving keys is supported only on Windows.',
+    'Windows не смогла обработать сохранённый ключ.': 'Windows could not process the saved key.',
+    'Введите ключ OpenAI API в настройках OpenAI.': 'Enter an OpenAI API key in OpenAI settings.',
+    'Впишите api_key в общий _translator3000_openai.json Translator3000.': 'Put api_key in the shared Translator3000 _translator3000_openai.json.',
+    'Base URL должен начинаться с http:// или https://.': 'Base URL must start with http:// or https://.',
+    'Ответ слишком большой; пакет будет разделён.': 'The response is too large; the batch will be split.',
+    'OpenAI не завершил перевод. Ответ не сохранён.': 'OpenAI did not complete the translation. The response was not saved.',
+    'API не завершил перевод или отказал. Ответ не сохранён.': 'The API did not complete the translation or refused it. The response was not saved.',
+    'Ключ OpenAI недействителен.': 'The OpenAI key is invalid.',
+    'Лимит запросов или баланс OpenAI исчерпан.': 'The OpenAI request limit or balance is exhausted.',
+    'Модель недоступна этому API-аккаунту.': 'The model is unavailable to this API account.',
+    'Нет доступа к OpenAI или выбранной модели.': 'No access to OpenAI or the selected model.',
+    'Ошибка OpenAI API: HTTP %s.': 'OpenAI API error: HTTP %s.',
+    'Не удалось проверить сертификат API. Проверьте Base URL и доверенный сертификат.': 'Could not verify the API certificate. Check Base URL and the trusted certificate.',
+    'Нет корректного ответа OpenAI. Проверьте интернет-соединение или Base URL.': 'No valid OpenAI response. Check your internet connection or Base URL.',
+    'Codex не найден. Укажите путь к codex.exe в настройках OpenAI.': 'Codex was not found. Set the path to codex.exe in OpenAI settings.',
+    'Операция отменена или истекло время ожидания Codex.': 'The operation was cancelled or Codex timed out.',
+    'Не удалось запустить codex.exe.': 'Could not start codex.exe.',
+    'Нажмите "Войти через ChatGPT" в разделе "OpenAI / ChatGPT — перевод".': 'Click "Sign in with ChatGPT" under "OpenAI / ChatGPT — translation".',
+    'Вход не завершён. Повторите вход через ChatGPT.': 'Sign-in is incomplete. Sign in with ChatGPT again.',
+    'Лимит ChatGPT/Codex исчерпан. Дождитесь его обновления.': 'The ChatGPT/Codex limit is exhausted. Wait for it to reset.',
+    'Codex не выполнил перевод. Проверьте вход и доступ к модели.': 'Codex did not translate the text. Check sign-in and model access.',
+    'Неизвестная модель.': 'Unknown model.',
+    'Неизвестное подключение или модель OpenAI.': 'Unknown OpenAI connection or model.',
+    'Модель отказалась переводить этот текст. Ответ не сохранён.': 'The model refused to translate this text. The response was not saved.',
+    'Неполный или некорректный перевод. Ответ не сохранён.': 'Incomplete or invalid translation. The response was not saved.',
+    'Перевод отменён.': 'Translation cancelled.',
+    'Файл перевода': 'Translation file',
+    'Переводить интерфейс игры (меню, настройки, подсказки)': 'Translate the game interface (menus, settings, tooltips)',
+    'UI translation: off (tick the checkbox in OpenAI settings to show UI translations).': 'UI translation: off (tick the checkbox in OpenAI settings to show UI translations).',
+    'UI translation: on, following Translator3000 mode (%s).': 'UI translation: on, mode %s.',
+    'UI translation: following Translator3000 mode (currently unknown).': 'UI translation: following Translator3000 mode (currently unknown).',
+    'UI translation: following Translator3000 mode.': 'UI translation: following Translator3000 mode.',
+    'UI translation: on. Open any screen - new labels are translated in the background.': 'UI translation: on. Open any screen - new labels are translated in the background.',
+    'UI translation: off. Dialogue translation is unaffected.': 'UI translation: off. Dialogue translation is unaffected.',
+    'UI translation: not installed yet.': 'UI translation: not installed yet.',
+    'UI translation: no active Translator3000 provider - open Translator3000 and pick a service.': 'UI translation: no active Translator3000 provider - open Translator3000 and pick a service.',
+    "UI translation: Ren'Py text module not found.": "UI translation: Ren'Py text module not found.",
+    'UI translation: Text.set_text not found in this Ren\'Py version.': 'UI translation: Text.set_text not found in this Ren\'Py version.',
+    'UI translation: uninstalled.': 'UI translation: uninstalled.',
+    'Экспорт перевода': 'Export translation',
+    'Импорт перевода': 'Import translation',
+    'Файл остаётся на этом компьютере. Его можно передать другому человеку.': 'The file stays on this computer. You can give it to another person.',
+    'Сначала выберите сервис перевода.': 'Select a translation service first.',
+    'Нет перевода для экспорта.': 'There is no translation to export.',
+    'Экспорт отменён.': 'Export cancelled.',
+    'Импорт отменён.': 'Import cancelled.',
+    'Экспортировано %d строк: %s': 'Exported %d lines: %s',
+    'Импортировано %d новых строк. Уже было %d.': 'Imported %d new lines. %d were already stored.',
+    'Файл перевода пуст или имеет неизвестный формат.': 'The translation file is empty or has an unknown format.',
+    'Не найден сервис %s для импорта.': 'The %s service needed for import was not found.',
+    'Выбор файла поддерживается только в Windows.': 'Choosing a file is supported only on Windows.',
+    'Не удалось открыть окно выбора файла.': 'Could not open the file chooser.',
+    'Не удалось экспортировать перевод: %s': 'Could not export the translation: %s',
+    'Не удалось импортировать перевод: %s': 'Could not import the translation: %s',
+}
+
+
+VIETNAMESE = {
+    'API не завершил перевод или отказал. Ответ не сохранён.': 'API chưa dịch xong hoặc từ chối. Không lưu kết quả.',
+    'API получает файл JSON целиком. ChatGPT получает тот же пакет целиком.': 'API nhận toàn bộ tệp JSON. ChatGPT nhận cùng gói đó.',
+    'API-ключ / вход через ChatGPT': 'Khóa API / Đăng nhập ChatGPT',
+    'API-ключи': 'Khóa API',
+    'Base URL должен начинаться с http:// или https://.': 'Base URL phải bắt đầu bằng http:// hoặc https://.',
+    'ChatGPT — вход в учётную запись': 'ChatGPT — đăng nhập tài khoản',
+    'ChatGPT: лимиты учётной записи. API: отдельная оплата.': 'ChatGPT: giới hạn theo tài khoản. API: tính phí riêng.',
+    'Codex не выполнил перевод. Проверьте вход и доступ к модели.': 'Codex không dịch được. Kiểm tra đăng nhập và quyền dùng mô hình.',
+    'Codex не найден. Укажите путь к codex.exe в настройках OpenAI.': 'Không tìm thấy Codex. Chọn đường dẫn codex.exe trong cài đặt OpenAI.',
+    'OpenAI / ChatGPT — перевод': 'OpenAI / ChatGPT — dịch',
+    'OpenAI API оплачивается отдельно. Сохранённый ключ защищён Windows.': 'OpenAI API tính phí riêng. Khóa đã lưu được Windows bảo vệ.',
+    'OpenAI API — перевод по ключу': 'OpenAI API — dịch bằng khóa',
+    'OpenAI добавил разметку. Ответ не сохранён.': 'OpenAI đã thêm markup. Không lưu kết quả.',
+    'OpenAI изменил порядок тегов. Ответ не сохранён.': 'OpenAI đã thay đổi thứ tự thẻ. Không lưu kết quả.',
+    'OpenAI изменил теги или переменные. Ответ не сохранён.': 'OpenAI đã thay đổi thẻ hoặc biến. Không lưu kết quả.',
+    'OpenAI не завершил перевод. Ответ не сохранён.': 'OpenAI chưa dịch xong. Không lưu kết quả.',
+    "UI translation: Ren'Py text module not found.": "Dịch giao diện: không tìm thấy module text của Ren'Py.",
+    "UI translation: Text.set_text not found in this Ren'Py version.": "Dịch giao diện: không tìm thấy Text.set_text trong phiên bản Ren'Py này.",
+    'UI translation: following Translator3000 mode (currently unknown).': 'Dịch giao diện: theo chế độ Translator3000 (chưa rõ).',
+    'UI translation: following Translator3000 mode.': 'Dịch giao diện: theo chế độ Translator3000.',
+    'UI translation: no active Translator3000 provider - open Translator3000 and pick a service.': 'Dịch giao diện: chưa có dịch vụ Translator3000 - mở Translator3000 và chọn dịch vụ.',
+    'UI translation: not installed yet.': 'Dịch giao diện: chưa cài đặt.',
+    'UI translation: off (tick the checkbox in OpenAI settings to show UI translations).': 'Dịch giao diện: tắt (tick ô trong cài đặt OpenAI để hiện bản dịch giao diện).',
+    'UI translation: off. Dialogue translation is unaffected.': 'Dịch giao diện: tắt. Dịch thoại không bị ảnh hưởng.',
+    'UI translation: on, following Translator3000 mode (%s).': 'Dịch giao diện: bật, theo chế độ Translator3000 (%s).',
+    'UI translation: on. Open any screen - new labels are translated in the background.': 'Dịch giao diện: bật. Mở màn hình bất kỳ - nhãn mới được dịch nền.',
+    'UI translation: uninstalled.': 'Dịch giao diện: đã gỡ.',
+    'Windows не смогла обработать сохранённый ключ.': 'Windows không xử lý được khóa đã lưu.',
+    'codex.exe: автоматически': 'codex.exe: tự động',
+    'Без API-ключа. Действуют доступные модели и лимиты вашего тарифа, включая Free.': 'Không cần khóa API. Áp dụng các mô hình và giới hạn của gói của bạn, kể cả Free.',
+    'Без размышлений': 'Không suy luận',
+    'В живом переводе передаются доступные реплики. Для всей игры запустите предварительное сканирование.': 'Dịch trực tiếp gửi các dòng thoại khả dụng. Hãy chạy quét trước để dịch toàn bộ game.',
+    'Введите ключ OpenAI API в настройках OpenAI.': 'Nhập khóa OpenAI API trong cài đặt OpenAI.',
+    'Ввести ключ': 'Nhập khóa',
+    'Войти через ChatGPT': 'Đăng nhập bằng ChatGPT',
+    'Впишите api_key в общий _translator3000_openai.json Translator3000.': 'Điền api_key vào _translator3000_openai.json dùng chung của Translator3000.',
+    'Вход не завершён. Повторите вход через ChatGPT.': 'Đăng nhập chưa xong. Đăng nhập lại bằng ChatGPT.',
+    'Вход через ChatGPT выполнен.': 'Đã đăng nhập bằng ChatGPT.',
+    'Вход через ChatGPT не проверен.': 'Chưa kiểm tra đăng nhập ChatGPT.',
+    'Выберите подключение и модель, затем проверьте связь.': 'Chọn kết nối và mô hình, rồi kiểm tra kết nối.',
+    'Выбор файла поддерживается только в Windows.': 'Chọn tệp chỉ hỗ trợ trên Windows.',
+    'Выбрать подключение для перевода': 'Chọn kết nối dịch',
+    'Глубокие': 'Cao',
+    'Готово': 'Xong',
+    'Готово: %d строк, включая последнюю. Теги и переменные проверены.': 'Xong: %d dòng, kể cả dòng cuối. Đã kiểm tra thẻ và biến.',
+    'До %d символов': 'Tối đa %d ký tự',
+    'Доступ к выбранной модели зависит от вашего аккаунта.': 'Quyền dùng mô hình đã chọn tùy thuộc vào tài khoản của bạn.',
+    'Завершите вход в браузере.': 'Hoàn tất đăng nhập trong trình duyệt.',
+    'Изменить Base URL': 'Đổi Base URL',
+    'Изменить ключ': 'Đổi khóa',
+    'Импорт отменён.': 'Đã hủy nhập.',
+    'Импорт перевода': 'Nhập bản dịch',
+    'Импортировано %d новых строк. Уже было %d.': 'Đã nhập %d dòng mới. Đã có sẵn %d dòng.',
+    'Ключ OpenAI недействителен.': 'Khóa OpenAI không hợp lệ.',
+    'Ключ введён': 'Đã nhập khóa',
+    'Ключ не введён': 'Chưa nhập khóa',
+    'Лимит ChatGPT/Codex исчерпан. Дождитесь его обновления.': 'Đã hết giới hạn ChatGPT/Codex. Chờ giới hạn được làm mới.',
+    'Лимит запросов или баланс OpenAI исчерпан.': 'Đã hết giới hạn yêu cầu hoặc số dư OpenAI.',
+    'Лёгкие': 'Thấp',
+    'Максимальные': 'Tối đa',
+    'Модель для ': 'Mô hình cho ',
+    'Модель недоступна этому API-аккаунту.': 'Tài khoản API này không dùng được mô hình đó.',
+    'Модель отказалась переводить этот текст. Ответ не сохранён.': 'Mô hình từ chối dịch văn bản này. Không lưu kết quả.',
+    'Нажмите "Войти через ChatGPT" в разделе "OpenAI / ChatGPT — перевод".': 'Bấm "Đăng nhập bằng ChatGPT" trong mục "OpenAI / ChatGPT — dịch".',
+    'Настройки сохранены.': 'Đã lưu cài đặt.',
+    'Не найден сервис %s для импорта.': 'Không tìm thấy dịch vụ %s để nhập.',
+    'Не удалось выполнить вход. Проверьте путь к codex.exe.': 'Đăng nhập thất bại. Kiểm tra đường dẫn codex.exe.',
+    'Не удалось запустить codex.exe.': 'Không chạy được codex.exe.',
+    'Не удалось импортировать перевод: %s': 'Không nhập được bản dịch: %s',
+    'Не удалось открыть окно выбора файла.': 'Không mở được hộp chọn tệp.',
+    'Не удалось проверить сертификат API. Проверьте Base URL и доверенный сертификат.': 'Không xác thực được chứng chỉ API. Kiểm tra Base URL và chứng chỉ tin cậy.',
+    'Не удалось прочитать настройки OpenAI. Введите ключ заново.': 'Không đọc được cài đặt OpenAI. Nhập lại khóa.',
+    'Не удалось сохранить настройки OpenAI.': 'Không lưu được cài đặt OpenAI.',
+    'Не удалось экспортировать перевод: %s': 'Không xuất được bản dịch: %s',
+    'Неизвестная модель.': 'Mô hình không xác định.',
+    'Неизвестное подключение или модель OpenAI.': 'Kết nối hoặc mô hình OpenAI không xác định.',
+    'Неполный или некорректный перевод. Ответ не сохранён.': 'Bản dịch chưa trọn hoặc không hợp lệ. Không lưu kết quả.',
+    'Нет доступа к OpenAI или выбранной модели.': 'Không truy cập được OpenAI hoặc mô hình đã chọn.',
+    'Нет корректного ответа OpenAI. Проверьте интернет-соединение или Base URL.': 'Không có phản hồi hợp lệ từ OpenAI. Kiểm tra internet hoặc Base URL.',
+    'Нет перевода для экспорта.': 'Chưa có bản dịch để xuất.',
+    'Операция отменена или истекло время ожидания Codex.': 'Thao tác đã bị hủy hoặc Codex quá thời gian chờ.',
+    'Ответ проверяется до последней строки. При обрыве пакет делится автоматически.': 'Kết quả được kiểm tra đến dòng cuối. Gói bị đứt sẽ tự động chia nhỏ.',
+    'Ответ слишком большой; пакет будет разделён.': 'Kết quả quá lớn; gói sẽ được chia nhỏ.',
+    'Отменить': 'Hủy',
+    'Очень глубокие': 'Rất cao',
+    'Ошибка OpenAI API: HTTP %s.': 'Lỗi OpenAI API: HTTP %s.',
+    'Ошибка подключения. Проверьте настройки и доступ к модели.': 'Lỗi kết nối. Kiểm tra cài đặt và quyền dùng mô hình.',
+    'Пакеты GPT': 'Gói GPT',
+    'Перевод отменён.': 'Đã hủy dịch.',
+    'Перевод строк %d–%d из %d; %s, %s.': 'Đang dịch dòng %d–%d trong %d; %s, %s.',
+    'Переводить интерфейс игры (меню, настройки, подсказки)': 'Dịch giao diện game (menu, cài đặt, gợi ý)',
+    'Подключение': 'Kết nối',
+    'Подогнать размер текста': 'Tự chỉnh cỡ chữ',
+    'Предельные': 'Cực hạn',
+    'Проверить вход': 'Kiểm tra đăng nhập',
+    'Проверить перевод': 'Kiểm tra dịch',
+    'Проверка входа...': 'Đang kiểm tra đăng nhập...',
+    'Проверка подключения': 'Kiểm tra kết nối',
+    'Проверка связи…': 'Đang kiểm tra kết nối…',
+    'Размышления': 'Suy luận',
+    'Связь работает: ': 'Kết nối OK: ',
+    'Сканирование: порядок сцен, целые строки, контекст соседних реплик.': 'Quét: theo thứ tự cảnh, trọn dòng, có ngữ cảnh các dòng thoại gần đó.',
+    'Сначала выберите один из сервисов OpenAI.': 'Hãy chọn một dịch vụ OpenAI trước.',
+    'Сначала выберите сервис перевода.': 'Hãy chọn dịch vụ dịch trước.',
+    'Сохранение ключа поддерживается только в Windows.': 'Lưu khóa chỉ hỗ trợ trên Windows.',
+    'Сохранить настройки': 'Lưu cài đặt',
+    'Сохранять ключ для текущего пользователя Windows': 'Lưu khóa cho người dùng Windows hiện tại',
+    'Средние': 'Trung bình',
+    'Удалить ключ': 'Xóa khóa',
+    'Указать путь к codex.exe': 'Chọn đường dẫn tới codex.exe',
+    'Учётная запись ChatGPT': 'Tài khoản ChatGPT',
+    'Файл остаётся на этом компьютере. Его можно передать другому человеку.': 'Tệp nằm trên máy này. Bạn có thể gửi cho người khác.',
+    'Файл перевода': 'Tệp bản dịch',
+    'Файл перевода пуст или имеет неизвестный формат.': 'Tệp bản dịch trống hoặc định dạng lạ.',
+    'Экспорт отменён.': 'Đã hủy xuất.',
+    'Экспорт перевода': 'Xuất bản dịch',
+    'Экспортировано %d строк: %s': 'Đã xuất %d dòng: %s',
+}
+
+def translate(text):
+    store = sys.modules.get('store')
+    translator = getattr(store, 'translator3000', None)
+    gui = getattr(translator, '_gui', None)
+    language = getattr(gui, 'gui_language', None)
+    if language in ('english', 'en'):
+        mapping = ENGLISH
+    elif language == 'vietnamese':
+        mapping = VIETNAMESE
+    else:
+        return text
+    if text in mapping:
+        return mapping[text]
+    if text in ENGLISH and text not in mapping:
+        return text
+    store = sys.modules.get('store')
+    translator = getattr(store, 'translator3000', None)
+    gui = getattr(translator, '_gui', None)
+    prefix = 'Связь работает: '
+    if text.startswith(prefix):
+        return mapping.get(prefix, prefix) + text[len(prefix):]
+    for original, english in mapping.items():
+        if '%d' not in original and '%s' not in original:
+            continue
+        pieces = re.split(u'(%d|%s)', original)
+        pattern = [u'^']
+        for piece in pieces:
+            if piece == u'%d':
+                pattern.append(u'(\\d+)')
+            elif piece == u'%s':
+                pattern.append(u'(.*?)')
+            else:
+                pattern.append(re.escape(piece))
+        pattern.append(u'$')
+        match = re.match(u''.join(pattern), text)
+        if match:
+            values = iter(match.groups())
+            return re.sub(r'%[ds]', lambda unused: next(values), english)
+    return text
+
+def mark(text):
+    return '{#notTranslate}' + translate(text)

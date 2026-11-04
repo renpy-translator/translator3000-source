@@ -32,6 +32,24 @@ Translator3000 automatically translates Ren'Py games while you play: it captures
 - Game variables editor, text editor, custom key combinations, color themes, and a draggable / resizable translator window.
 - Notifications feed, statistics, translation-cache management, and database backup.
 
+### Integrated add-on features
+
+Everything from the sibling `translator3000-openai` add-on is integrated
+natively into this source (same features, organized the stock way — no
+separate add-on archive):
+
+- **OpenAI / ChatGPT providers**: `openai_api` (own API key, custom Base URL,
+  model and reasoning effort) and `openai_chatgpt` (ChatGPT account via Codex),
+  with tag/variable protection and context-aware batch translation.
+- **Game UI translation**: prescan also collects text from every registered
+  Ren'Py screen and stores it in the same database; display is opt-in and
+  follows the Off / DB only / Realtime mode.
+- **Quick mode toggle**: on-screen badge (top-right) and Alt+1 to flip
+  Off ↔ DB only mid-game.
+- **Export / import** of the translation database from the settings panel.
+- **Extras**: auto-fit of translated text into its frame, and the forced
+  update check is blocked.
+
 ### Interface languages
 
 - Interface available in **English (default)**, Russian, Vietnamese, Chuvash, and Turkish.
@@ -92,6 +110,9 @@ src/
   _translator3000_main_modules/
     py2/_translator3000/*.py        modules for Ren'Py 7 games
     py3/_translator3000/*.py        modules for Ren'Py 8 games
+    _openai/ (inside _translator3000/)  OpenAI/ChatGPT provider + client
+    _ui_translate / _mode_toggle / _autofit / _transfer / _disable_update /
+    _openai_labels (inside _translator3000/)  integrated add-on features
   _translator3000_extra_modules/    vendored libraries
   old_requests_module/  old_pkgutil_module/  uuid_py3_fix/  _extra_six.py
   Translator3000OtherFiles/         fonts, GUI images, patterns
@@ -116,16 +137,18 @@ Done in this reconstruction:
 - [x] Ren'Py 8 compatibility fixes (dual Python 2/3 `exec` form, long literals)
 - [x] One-command build back into a drop-in `Translator3000.rpa`
 - [x] Verified loading and init on Ren'Py 7.3.5 and Ren'Py 8.5.3
+- [x] OpenAI / ChatGPT translation providers integrated natively (`openai_api`, `openai_chatgpt`), registered like the stock providers
+- [x] Game UI translation (menus, preferences, save/load screens) through the same provider and database
+- [x] Export / import of translation databases (backup, sharing between machines)
+- [x] Quick mode toggle (on-screen badge and hotkey to flip Off ↔ DB only mid-game)
+- [x] Auto-fit of translated text into its frame
+- [x] Forced update check blocked
+- [x] Verified the integrated build on Ren'Py 7 and Ren'Py 8 test games (OpenAI services listed beside the stock providers)
 
 Planned features (contributions welcome):
 
-- [ ] OpenAI / ChatGPT translation provider (API key, custom base URL and model, context-aware batch translation)
-- [ ] Game UI translation (menus, preferences, save/load screens) through the same provider and database
-- [ ] Export / import of translation databases (backup, sharing between machines)
-- [ ] Quick mode toggle (on-screen badge and hotkey to flip Off ↔ DB only mid-game)
-- [ ] Auto-fit of translated text and smarter automatic font selection (Vietnamese, CJK, …)
+- [ ] Smarter automatic font selection (Vietnamese, CJK, …)
 - [ ] Per-game glossary / do-not-translate terms and protected placeholders
-- [ ] Option to disable the forced update check
 - [ ] More interface languages (简体中文, 日本語, Español, …)
 - [ ] Automated Ren'Py 7 / Ren'Py 8 test matrix and CI builds of the RPA on release tags
 - [ ] Prebuilt release archives attached to GitHub Releases

@@ -116,16 +116,16 @@ Completado en esta reconstrucción:
 - [x] Correcciones de compatibilidad con Ren'Py 8 (forma de `exec` válida en Python 2/3, literales enteros largos)
 - [x] Compilación con un solo comando de vuelta a un `Translator3000.rpa` listo para usar
 - [x] Carga e inicialización verificadas en Ren'Py 7.3.5 y Ren'Py 8.5.3
+- [x] Proveedor de traducción OpenAI / ChatGPT (clave API, base URL y modelo personalizables, traducción por lotes con contexto)
+- [x] Traducción de la interfaz del juego (menús, preferencias, pantallas de guardar/cargar) con el mismo proveedor y la misma base de datos
+- [x] Exportación / importación de bases de datos de traducción (copias de seguridad, compartir entre equipos)
+- [x] Cambio rápido de modo (insignia en pantalla y tecla de acceso rápido para alternar Desactivado ↔ Solo BD en mitad del juego)
+- [x] Opción para desactivar la comprobación forzada de actualizaciones
 
 Funciones planeadas (las contribuciones son bienvenidas):
 
-- [ ] Proveedor de traducción OpenAI / ChatGPT (clave API, base URL y modelo personalizables, traducción por lotes con contexto)
-- [ ] Traducción de la interfaz del juego (menús, preferencias, pantallas de guardar/cargar) con el mismo proveedor y la misma base de datos
-- [ ] Exportación / importación de bases de datos de traducción (copias de seguridad, compartir entre equipos)
-- [ ] Cambio rápido de modo (insignia en pantalla y tecla de acceso rápido para alternar Desactivado ↔ Solo BD en mitad del juego)
 - [ ] Ajuste automático del texto traducido a su marco y selección automática de fuente más inteligente (vietnamita, CJK…)
 - [ ] Glosario por juego / términos que no deben traducirse y marcadores protegidos
-- [ ] Opción para desactivar la comprobación forzada de actualizaciones
 - [ ] Más idiomas de interfaz (简体中文, 日本語, Español…)
 - [ ] Matriz de pruebas automática de Ren'Py 7 / Ren'Py 8 y compilaciones del RPA con CI en las etiquetas de versión
 - [ ] Archivos de versión precompilados adjuntos a GitHub Releases

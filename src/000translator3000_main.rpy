@@ -3130,6 +3130,12 @@ init 2:
         style_prefix "translator3000"
         layer _translator3000.SCREEN_LAYER_NAME
         use translator3000_base_vbox_in_window(translator3000._gui.ApplySettingAction(), first_spacing=None, spacing=_translator3000_gui.resize_from_1080(20), background=None):
+            textbutton tr3000_ui.mark('Экспорт перевода'):
+                action Function(tr3000_transfer.export_dialog)
+            textbutton tr3000_ui.mark('Импорт перевода'):
+                action Function(tr3000_transfer.import_dialog)
+            textbutton tr3000_ui.mark('OpenAI / ChatGPT — перевод'):
+                action translator3000._gui.ForwardAction("translator3000_openai_preferences")
             textbutton translator3000._gui.translate("Настроить параметры отображаемого текста."):
                 action translator3000._gui.ForwardAction(
                     "translator3000_extra_text_preferences"
@@ -9101,3 +9107,262 @@ init 3:
                     if translator3000.vars_changer.is_active():
                         action Function(translator3000.vars_changer.set_wrapper, var_wrapper)
 
+# ---------------------------------------------------------------------------
+# Integrated features (ported from the translator3000-openai add-on; see
+# AGENTS.md). Native layout: provider in _translator3000/_openai/, feature
+# modules beside the other _translator3000 modules, screens below.
+# ---------------------------------------------------------------------------
+
+init -41 python:
+    from _translator3000 import _disable_update as _tr3000_disable_update
+    from _translator3000._openai import client as tr3000_ai
+    from _translator3000 import _openai_labels as tr3000_ui
+    from _translator3000 import _ui_translate as tr3000_ui_translate
+    from _translator3000 import _mode_toggle as tr3000_mode_toggle
+    from _translator3000 import _autofit as tr3000_fit
+    from _translator3000 import _transfer as tr3000_transfer
+    from _translator3000 import _paths as _tr3000_root_paths
+    tr3000_ai.use_shared_settings(_tr3000_root_paths.RENPY_BASEDIR)
+    tr3000_ai.settings.cert_path = _tr3000_root_paths.CERT_PATH
+    tr3000_transfer.install()
+    tr3000_ui_translate.load_settings()
+
+init -7 python:
+    tr3000_ai.install_prescan(_translator3000.Preparer)
+    if "tr3000_autofit_button" not in config.overlay_screens:
+        config.overlay_screens.append("tr3000_autofit_button")
+    if "tr3000_mode_badge" not in config.overlay_screens:
+        config.overlay_screens.append("tr3000_mode_badge")
+
+init 5 python:
+    tr3000_fit.install(type(translator3000))
+    _tr3000_current_service = translator3000._translationService
+    if tr3000_ai.canonical_service(_tr3000_current_service) != _tr3000_current_service:
+        translator3000._translationService = tr3000_ai.canonical_service(_tr3000_current_service)
+        translator3000._setting["useNoFreezeLogic"] = True
+
+init 999 python:
+    tr3000_ui_translate.install()
+    try:
+        tr3000_ui_translate.install_prescan(_translator3000.Preparer)
+    except Exception:
+        try:
+            tr3000_ui_translate.install_prescan()
+        except Exception:
+            pass
+
+init 9999:
+    screen tr3000_autofit_button():
+        zorder 101
+        if renpy.get_screen("say") is not None and not _menu:
+            textbutton "{#notTranslate}Aa":
+                id "tr3000_fit_button"
+                style "tr3000_autofit_button"
+                text_style "tr3000_autofit_button_text"
+                xalign 0.99
+                yalign 1.0
+                yoffset -36
+                action Function(tr3000_fit.refit)
+                tooltip tr3000_ui.translate("Подогнать размер текста")
+
+    style tr3000_autofit_button is default:
+        background None
+        hover_background None
+        padding (5, 2)
+
+    style tr3000_autofit_button_text is default:
+        size 16
+        color "#8888"
+        hover_color "#cccc"
+        outlines []
+
+    # Quick mode toggle: badge at the top-right corner (also a button).
+    # Click / Alt+1 switches off <-> db_only through Translator3000's own mode
+    # property, so dialogue and UI text change together. Hidden while any
+    # Translator3000 panel is open (its screen tag hides this one anyway).
+    screen tr3000_mode_badge():
+        zorder 101
+        if "tr3000_mode_toggle" in globals():
+            textbutton "{#notTranslate}" + translator3000.quote(tr3000_mode_toggle.mode_label()):
+                id "tr3000_mode_badge_button"
+                style "tr3000_mode_badge_button"
+                text_style "tr3000_mode_badge_text"
+                xalign 1.0
+                yalign 0.0
+                xoffset -8
+                yoffset 6
+                action Function(tr3000_mode_toggle.toggle_db_only)
+            key "alt_K_1" action Function(tr3000_mode_toggle.toggle_db_only)
+            timer 0.5 action Function(renpy.restart_interaction) repeat True
+
+    style tr3000_mode_badge_button is default:
+        background "#00000066"
+        hover_background "#00000099"
+        padding (8, 3)
+
+    style tr3000_mode_badge_text is default:
+        size 15
+        color "#cccc"
+        hover_color "#ffff"
+        outlines []
+
+    screen translator3000_openai_keys():
+        tag translator3000_screen
+        style_prefix "translator3000"
+        layer _translator3000.SCREEN_LAYER_NAME
+        default editing = None
+        use translator3000_base_vbox_in_window(Function(tr3000_ai.settings.save), spacing=_translator3000_gui.resize_from_1080(20), background=None):
+            label tr3000_ui.mark('API-ключи')
+            window:
+                has vbox
+                label "{#notTranslate}OpenAI API"
+                textbutton "{#notTranslate}" + (tr3000_ui.translate("Изменить ключ") if tr3000_ai.settings.key else tr3000_ui.translate("Ввести ключ")):
+                    id "openai_edit_key"
+                    action SetScreenVariable("editing", "key")
+                textbutton tr3000_ui.mark('Удалить ключ'):
+                    id "openai_delete_key"
+                    sensitive bool(tr3000_ai.settings.key)
+                    action (Function(tr3000_ai.settings.forget_key), SetScreenVariable("editing", None))
+                text "{#notTranslate}" + (tr3000_ui.translate("Ключ введён") if tr3000_ai.settings.key else tr3000_ui.translate("Ключ не введён"))
+                if editing == "key":
+                    input:
+                        id "openai_key_input"
+                        value FieldInputValue(tr3000_ai.settings, "key")
+                        copypaste True
+                        length 512
+                        exclude "\r\n "
+                    textbutton tr3000_ui.mark('Готово'):
+                        id "openai_key_done"
+                        action (SetScreenVariable("editing", None), Function(tr3000_ai.settings.save))
+                text "{#notTranslate}Base URL: " + translator3000.quote(tr3000_ai.settings.base_url)
+                textbutton tr3000_ui.mark('Изменить Base URL'):
+                    id "openai_edit_base_url"
+                    action SetScreenVariable("editing", "base_url")
+                if editing == "base_url":
+                    input:
+                        id "openai_base_url_input"
+                        value FieldInputValue(tr3000_ai.settings, "base_url")
+                        copypaste True
+                        length 2048
+                        exclude "\r\n "
+                    textbutton tr3000_ui.mark('Готово'):
+                        id "openai_base_url_done"
+                        action (SetScreenVariable("editing", None), Function(tr3000_ai.settings.save))
+                textbutton tr3000_ui.mark('Сохранять ключ для текущего пользователя Windows'):
+                    style "translator3000_check_button"
+                    text_style "translator3000_button_text"
+                    action (ToggleField(tr3000_ai.settings, "remember_key"), Function(tr3000_ai.settings.save))
+                text tr3000_ui.mark('OpenAI API оплачивается отдельно. Сохранённый ключ защищён Windows.')
+            window:
+                has vbox
+                label tr3000_ui.mark('Учётная запись ChatGPT')
+                textbutton tr3000_ui.mark('Войти через ChatGPT'):
+                    sensitive not tr3000_ai.settings.account_busy
+                    action Function(tr3000_ai.settings.account_action, True)
+                textbutton tr3000_ui.mark('Проверить вход'):
+                    sensitive not tr3000_ai.settings.account_busy
+                    action Function(tr3000_ai.settings.account_action)
+                if tr3000_ai.settings.account_busy:
+                    textbutton tr3000_ui.mark('Отменить'):
+                        action Function(tr3000_ai.settings.account_cancel.set)
+                    timer 0.5 action Function(renpy.restart_interaction) repeat True
+                text "{#notTranslate}" + translator3000.quote(tr3000_ui.translate(tr3000_ai.settings.account_status))
+                text tr3000_ui.mark('Без API-ключа. Действуют доступные модели и лимиты вашего тарифа, включая Free.')
+            window:
+                has vbox
+                label "{#notTranslate}Codex"
+                text "{#notTranslate}" + translator3000.quote(tr3000_ai.settings.codex_path or tr3000_ui.translate("codex.exe: автоматически"))
+                textbutton tr3000_ui.mark('Указать путь к codex.exe'):
+                    action SetScreenVariable("editing", "codex_path")
+                if editing == "codex_path":
+                    input:
+                        value FieldInputValue(tr3000_ai.settings, "codex_path")
+                        copypaste True
+                        length 1024
+                        exclude "\r\n"
+                    textbutton tr3000_ui.mark('Готово'):
+                        action (SetScreenVariable("editing", None), Function(tr3000_ai.settings.save))
+            textbutton tr3000_ui.mark('Сохранить настройки'):
+                action Function(tr3000_ai.settings.save)
+            text "{#notTranslate}" + translator3000.quote(tr3000_ui.translate(tr3000_ai.settings.status))
+            textbutton tr3000_ui.mark('Выбрать подключение для перевода'):
+                action translator3000._gui.ForwardAction("translator3000_openai_preferences")
+
+    screen translator3000_openai_preferences():
+        tag translator3000_screen
+        style_prefix "translator3000"
+        layer _translator3000.SCREEN_LAYER_NAME
+        use translator3000_base_vbox_in_window(Function(tr3000_ai.settings.save), spacing=_translator3000_gui.resize_from_1080(20), background=None):
+            if True:
+                window:
+                    has vbox
+                    label tr3000_ui.mark('Файл перевода')
+                    textbutton tr3000_ui.mark('Экспорт перевода'):
+                        action Function(tr3000_transfer.export_dialog)
+                    textbutton tr3000_ui.mark('Импорт перевода'):
+                        action Function(tr3000_transfer.import_dialog)
+                    text tr3000_ui.mark('Файл остаётся на этом компьютере. Его можно передать другому человеку.')
+            label tr3000_ui.mark('OpenAI / ChatGPT — перевод')
+            textbutton tr3000_ui.mark('API-ключ / вход через ChatGPT'):
+                action translator3000._gui.ForwardAction("translator3000_openai_keys")
+            window:
+                has vbox
+                label tr3000_ui.mark('Подключение')
+                for service, spec in tr3000_ai.SERVICES.items():
+                    textbutton "{#notTranslate}" + tr3000_ai.service_label(service):
+                        id service
+                        style "translator3000_radio_button"
+                        text_style "translator3000_button_text"
+                        selected translator3000._translationService == service
+                        action (SetField(translator3000, "_translationService", service), SetDict(translator3000._setting, "useNoFreezeLogic", True), translator3000._gui.ApplySettingAction(True, language_check=True, interrupt_translations=True))
+                text tr3000_ui.mark('ChatGPT: лимиты учётной записи. API: отдельная оплата.')
+            $ backend = "api" if translator3000._translationService == "openai_api" else "codex"
+            window:
+                has vbox
+                label tr3000_ui.mark('Модель для ') + ("OpenAI API" if backend == "api" else "ChatGPT")
+                for model in tr3000_ai.MODELS:
+                    textbutton "{#notTranslate}" + tr3000_ai.model_label(model, backend):
+                        id "tr3000_model_" + model
+                        style "translator3000_radio_button"
+                        text_style "translator3000_button_text"
+                        selected tr3000_ai.selected_model(backend) == model
+                        action (Function(tr3000_ai.set_model, backend, model), translator3000._gui.ApplySettingAction(True, interrupt_translations=True))
+                text tr3000_ui.mark('Доступ к выбранной модели зависит от вашего аккаунта.')
+            window:
+                has vbox
+                label tr3000_ui.mark('Размышления')
+                for effort in tr3000_ai.effort_options(backend):
+                    textbutton "{#notTranslate}" + tr3000_ui.translate(tr3000_ai.EFFORT_LABELS[effort]):
+                        style "translator3000_radio_button"
+                        text_style "translator3000_button_text"
+                        selected getattr(tr3000_ai.settings, backend + "_effort") == effort
+                        action (SetField(tr3000_ai.settings, backend + "_effort", effort), Function(tr3000_ai.settings.save), translator3000._gui.ApplySettingAction(True, interrupt_translations=True))
+            window:
+                has vbox
+                label tr3000_ui.mark('Пакеты GPT')
+                for size in tr3000_ai.BATCH_SIZES:
+                    textbutton tr3000_ui.mark('До %d символов') % size:
+                        style "translator3000_radio_button"
+                        text_style "translator3000_button_text"
+                        selected tr3000_ai.settings.batch_chars == size
+                        action (SetField(tr3000_ai.settings, "batch_chars", size), Function(tr3000_ai.settings.save), translator3000._gui.ApplySettingAction(True, interrupt_translations=True))
+                text tr3000_ui.mark('Сканирование: порядок сцен, целые строки, контекст соседних реплик.')
+                text tr3000_ui.mark('API получает файл JSON целиком. ChatGPT получает тот же пакет целиком.')
+                text tr3000_ui.mark('Ответ проверяется до последней строки. При обрыве пакет делится автоматически.')
+                text tr3000_ui.mark('В живом переводе передаются доступные реплики. Для всей игры запустите предварительное сканирование.')
+                if "tr3000_ui_translate" in globals():
+                    textbutton tr3000_ui.mark('Переводить интерфейс игры (меню, настройки, подсказки)'):
+                        style "translator3000_check_button"
+                        text_style "translator3000_button_text"
+                        selected tr3000_ui_translate.state.enabled
+                        action Function(tr3000_ui_translate.set_enabled, not tr3000_ui_translate.state.enabled)
+                    text "{#notTranslate}" + translator3000.quote(tr3000_ui.translate(tr3000_ui_translate.state.status))
+                    timer 0.5 action Function(renpy.restart_interaction) repeat True
+            window:
+                has vbox
+                label tr3000_ui.mark('Проверка подключения')
+                textbutton tr3000_ui.mark('Проверить перевод'):
+                    sensitive not tr3000_ai.settings.busy and translator3000._translationService in tr3000_ai.SERVICES
+                    action Function(tr3000_ai.settings.test, translator3000._translationService)
+                text "{#notTranslate}" + translator3000.quote(tr3000_ui.translate(tr3000_ai.settings.status))
+                timer 0.5 action Function(renpy.restart_interaction) repeat True
