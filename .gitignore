@@ -1,7 +1,9 @@
-# Build output
-build/
+# Build output: everything ignored except the prebuilt RPA, which is
+# committed so users can download and use it without building.
+build/*
 *.rpyc
 *.rpa
+!build/Translator3000.rpa
 
 # Python
 __pycache__/

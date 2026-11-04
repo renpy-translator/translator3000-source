@@ -37,4 +37,4 @@ repo into this repo's native layout.
   `python build.py --renpy7-exe "<RenPy7Game.exe>" --python2 "<python27\python.exe>"`
 - Git identity: `RenPy-Translator <hien.bt@htigroup.vn>`.
   Conventional commits, no AI references.
-- Never commit `build/`, `*.rpa`, `*.rpyc`, `__pycache__/`.
+- Never commit `*.rpyc` or `__pycache__/`. Exception: the prebuilt `build/Translator3000.rpa` IS committed (rebuild and re-commit it whenever the source changes) so users can download and play without building; all other build output stays ignored.
