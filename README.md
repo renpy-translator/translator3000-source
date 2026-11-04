@@ -1,4 +1,4 @@
-# Translator3000 — Reconstructed Source
+# Translator3000 — Reconstructed Source + AI Translate + New features
 
 <p align="center">
   <strong>English</strong> ·
