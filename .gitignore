@@ -1,0 +1,19 @@
+# Build output
+build/
+*.rpyc
+*.rpa
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Translator3000 runtime data
+_translator3000Data/
+_translator3000_setting.json
+*.log
+
+# Editors / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
